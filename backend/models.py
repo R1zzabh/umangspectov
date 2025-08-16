@@ -6,7 +6,7 @@ db = SQLAlchemy()
 class Applicant(db.Model):
     __tablename__ = "applicants_umang"
 
-    id = db.mapped_column(db.BigInteger, primary_key=True, autoincrement=True)
+    id = db.mapped_column(db.Integer, primary_key=True, autoincrement=True)
     name = db.mapped_column(db.String(100), nullable=False)
     email = db.mapped_column(db.String(255), nullable=False, unique=True)
     phone = db.mapped_column(db.String(20), nullable=False)
