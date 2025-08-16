@@ -30,16 +30,17 @@ def create_submission():
     """
     data = request.get_json(silent=True) or request.form
 
+    # Support both camelCase (frontend) and snake_case (backend) field names
     name = (data.get("name") or "").strip()
     email = (data.get("email") or "").strip().lower()
     phone = (data.get("phone") or "").strip()
     university = (data.get("university") or "").strip()
-    university_location = (data.get("university_location") or "").strip()
-    graduation_year = (data.get("graduation_year") or "").strip()
-    preferred_domain = (data.get("preferred_domain") or "").strip()
+    university_location = (data.get("university_location") or data.get("universityLocation") or "").strip()
+    graduation_year = (data.get("graduation_year") or data.get("graduationYear") or "").strip()
+    preferred_domain = (data.get("preferred_domain") or data.get("preferredDomain") or "").strip()
     cgpa_raw = (data.get("cgpa") or "").strip()
-    participated = _as_bool(data.get("participated_in_hackathon"))
-    linkedin_url = (data.get("linkedin_url") or "").strip()
+    participated = _as_bool(data.get("participated_in_hackathon") or data.get("participatedInHackathon"))
+    linkedin_url = (data.get("linkedin_url") or data.get("linkedinUrl") or "").strip()
 
     errors = []
     if not name: errors.append("name is required")
@@ -98,9 +99,6 @@ def create_submission():
         db.session.rollback()
         return jsonify({"ok": False, "error": "unexpected error"}), 500
 
-    # Optional Location header to the resource (if you add a GET later)
-    location = url_for("api.get_submission", submission_id=a.id, _external=False) \
-               if "api.get_submission" in {r.endpoint for r in bp.deferred_functions} else None
-
+    # Return success response
     resp = jsonify({"ok": True, "id": a.id})
-    return (resp, 201, {"Location": location} if location else {})
+    return resp, 201
