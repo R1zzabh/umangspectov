@@ -9,15 +9,15 @@ const Header = () => {
       <header className="sticky top-0 z-50 bg-[#0D0D0D] backdrop-blur-lg bg-opacity-80 py-4 shadow-xl shadow-[#00509E]/20">
         <div className="container mx-auto px-4 flex items-center justify-between">
           <a href="#" className="flex items-center space-x-2">
-            <Rocket size={24} className="text-[#3A86FF]" />
-            <span className="text-xl md:text-2xl font-bold text-blue-400">UMANG</span>
+            <Rocket size={24} className="text-white" />
+            <span className="text-xl md:text-2xl font-bold text-white">UMANG</span>
           </a>
 
           <nav className="hidden md:flex flex-1 justify-center space-x-8 lg:space-x-12">
-            <a href="#about" className="text-md font-medium hover:text-[#9D4EDD] transition-colors duration-300">Overview</a>
-            <a href="#requirements" className="text-md font-medium hover:text-[#9D4EDD] transition-colors duration-300">Requirements</a>
-            <a href="#faqs" className="text-md font-medium hover:text-[#9D4EDD] transition-colors duration-300">FAQs</a>
-            <a href="#benefits" className="text-md font-medium hover:text-[#9D4EDD] transition-colors duration-300">Benefits</a>
+            <a href="#about" className="text-md font-medium hover:text-blue-400 transition-colors duration-300 text-white">Overview</a>
+            <a href="#requirements" className="text-md font-medium hover:text-blue-400 transition-colors duration-300 text-white">Requirements</a>
+            <a href="#faqs" className="text-md font-medium hover:text-blue-400 transition-colors duration-300 text-white">FAQs</a>
+            <a href="#benefits" className="text-md font-medium hover:text-blue-400 transition-colors duration-300 text-white">Benefits</a>
           </nav>
 
           <a href="#register" className="hidden md:block">
