@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const UmangRegisterForm = () => {
+const RegisterForm = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -96,33 +96,94 @@ const UmangRegisterForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
-    
+
     setIsSubmitting(true);
-    
-    // Simulate form submission
+
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      alert('Registration submitted successfully! Check your email for confirmation.');
-      
-      // Reset form
-      setFormData({
-        name: '',
-        email: '',
-        phone: '',
-        university: '',
-        universityLocation: '',
-        graduationYear: '',
-        preferredDomain: '',
-        cgpa: '',
-        participatedInHackathon: '',
-        linkedinUrl: ''
+      // Prepare data for API submission
+      const submissionData = {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        university: formData.university,
+        universityLocation: formData.universityLocation,
+        graduationYear: formData.graduationYear,
+        preferredDomain: formData.preferredDomain,
+        cgpa: formData.cgpa,
+        participatedInHackathon: formData.participatedInHackathon === 'Yes' ? 'true' : 'false',
+        linkedinUrl: formData.linkedinUrl
+      };
+
+      // Make API call to backend
+      const response = await fetch('http://localhost:5001/api/submissions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(submissionData)
       });
+
+      const result = await response.json();
+
+      if (response.ok && result.ok) {
+        // Use a custom modal or a more integrated notification instead of alert
+        // For now, we'll keep alert for simplicity
+        alert('Registration submitted successfully! Check your email for confirmation.');
+
+        // Reset form
+        setFormData({
+          name: '',
+          email: '',
+          phone: '',
+          university: '',
+          universityLocation: '',
+          graduationYear: '',
+          preferredDomain: '',
+          cgpa: '',
+          participatedInHackathon: '',
+          linkedinUrl: ''
+        });
+        setErrors({});
+      } else {
+        // Handle validation errors from backend
+        if (result.errors && Array.isArray(result.errors)) {
+          // Map backend errors to frontend field names for better UX
+          const backendErrors = {};
+          result.errors.forEach(error => {
+            if (error.includes('name')) backendErrors.name = error;
+            else if (error.includes('email')) backendErrors.email = error;
+            else if (error.includes('phone')) backendErrors.phone = error;
+            else if (error.includes('university_location')) backendErrors.universityLocation = error;
+            else if (error.includes('university')) backendErrors.university = error;
+            else if (error.includes('graduation_year')) backendErrors.graduationYear = error;
+            else if (error.includes('preferred_domain')) backendErrors.preferredDomain = error;
+            else if (error.includes('cgpa')) backendErrors.cgpa = error;
+            else if (error.includes('participated_in_hackathon')) backendErrors.participatedInHackathon = error;
+            else if (error.includes('linkedin_url')) backendErrors.linkedinUrl = error;
+          });
+
+          if (Object.keys(backendErrors).length > 0) {
+            setErrors(backendErrors);
+          } else {
+            alert('Please fix the following errors:\n' + result.errors.join('\n'));
+          }
+        } else if (result.error) {
+          if (result.error === 'duplicate email') {
+            setErrors({ email: 'This email is already registered. Please use a different email address.' });
+          } else {
+            alert('Error: ' + result.error);
+          }
+        } else {
+          alert('Something went wrong. Please try again.');
+        }
+      }
     } catch (error) {
-      alert('Something went wrong. Please try again.');
+      console.error('Submission error:', error);
+      alert('Network error. Please check your connection and try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -155,7 +216,7 @@ const UmangRegisterForm = () => {
             Register Now
           </h2>
           
-          <div className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
             {/* Name */}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -343,7 +404,7 @@ const UmangRegisterForm = () => {
 
             {/* Submit Button */}
             <button 
-              onClick={handleSubmit} 
+              type="submit"
               disabled={isSubmitting}
               className="w-full px-8 py-5 bg-gradient-to-r from-[#3A86FF] to-[#9D4EDD] text-white font-semibold text-lg rounded-xl shadow-2xl hover:shadow-[#3A86FF]/25 hover:from-[#4A96FF] hover:to-[#AD5EEE] transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
@@ -369,11 +430,11 @@ const UmangRegisterForm = () => {
                 📧 You'll receive a confirmation email within 24-48 hours
               </p>
             </div>
-            </div>
+            </form>
         </div>
       </div>
     </section>
   );
 };
 
-export default UmangRegisterForm;
+export default RegisterForm;
