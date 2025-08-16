@@ -130,6 +130,8 @@ const RegisterForm = () => {
       const result = await response.json();
 
       if (response.ok && result.ok) {
+        // Use a custom modal or a more integrated notification instead of alert
+        // For now, we'll keep alert for simplicity
         alert('Registration submitted successfully! Check your email for confirmation.');
 
         // Reset form
@@ -214,7 +216,7 @@ const RegisterForm = () => {
             Register Now
           </h2>
           
-          <div className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
             {/* Name */}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -402,7 +404,7 @@ const RegisterForm = () => {
 
             {/* Submit Button */}
             <button 
-              onClick={handleSubmit} 
+              type="submit"
               disabled={isSubmitting}
               className="w-full px-8 py-5 bg-gradient-to-r from-[#3A86FF] to-[#9D4EDD] text-white font-semibold text-lg rounded-xl shadow-2xl hover:shadow-[#3A86FF]/25 hover:from-[#4A96FF] hover:to-[#AD5EEE] transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
@@ -428,7 +430,7 @@ const RegisterForm = () => {
                 📧 You'll receive a confirmation email within 24-48 hours
               </p>
             </div>
-            </div>
+            </form>
         </div>
       </div>
     </section>
