@@ -23,8 +23,7 @@ def get_allowed_origins():
         "http://127.0.0.1:5173",
         "http://localhost:5500",
         "http://127.0.0.1:5500",
-        "https://umang.sankalp.spectov.in/#faqs",
-        "https://umang.sankalp.spectov.in/"
+        "https://umang.sankalp.spectov.in",
     ]
 
 def should_auto_create_tables() -> bool:
@@ -75,6 +74,6 @@ def create_app() -> Flask:
 # Dev entrypoint; in production Passenger/Gunicorn imports create_app() instead
 if __name__ == "__main__":
     app = create_app()
-    port = int(os.getenv("PORT", "5000"))
+    port = int(os.getenv("PORT", "5001"))
     debug = not is_production()
     app.run(host="0.0.0.0", port=port, debug=debug)
