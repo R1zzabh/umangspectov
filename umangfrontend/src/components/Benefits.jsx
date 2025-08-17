@@ -125,9 +125,7 @@ const Benefits = () => {
               }`}></div>
               </span>
             </h2>
-            <div className="absolute -top-4 -right-4 text-[#FFE066] animate-bounce">
-              <Sparkles size={24} />
-            </div>
+            
           </div>
           
           <p className="text-gray-300 max-w-2xl mx-auto mt-6 text-lg leading-relaxed">
@@ -260,19 +258,6 @@ const Benefits = () => {
               </div>
             </div>
           ))}
-        </div>
-
-        {/* Call to Action */}
-        <div className={`text-center mt-16 transition-all duration-1000 delay-1000 ${
-          isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-        }`}>
-          <div className="inline-flex items-center space-x-2 px-6 py-3 rounded-full 
-                         bg-gradient-to-r from-[#3A86FF]/20 to-[#9D4EDD]/20 
-                         border border-[#3A86FF]/30 backdrop-blur-sm">
-            <Rocket size={20} className="text-[#3A86FF]" />
-            <span className="text-gray-300 font-medium">Ready to unlock all these benefits?</span>
-            <div className="w-2 h-2 rounded-full bg-[#9D4EDD] animate-pulse"></div>
-          </div>
         </div>
       </div>
 

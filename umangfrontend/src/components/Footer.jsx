@@ -168,24 +168,26 @@ const Footer = () => {
             ))}
           </div>
 
-          {/* Powered By Section */}
-          <div className={`text-center md:text-right transition-all duration-1000 delay-500 ${
-            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-          }`}>
-            <div className="p-4 rounded-2xl bg-gradient-to-r from-gray-900/30 to-gray-800/30 border border-gray-700/30">
-              <div className="flex items-center justify-center md:justify-end space-x-2 mb-2">
-                <Sparkles size={16} className="text-[#FFE066] animate-pulse" />
-                <span className="text-sm font-semibold text-gray-300">Powered by</span>
-              </div>
-              <div className="text-sm text-gray-400">
-                <span className="text-[#3A86FF] font-medium hover:text-[#5B9CFF] transition-colors cursor-pointer">Sankalp</span>
-                <span className="mx-2">•</span>
-                <span className="text-[#9D4EDD] font-medium hover:text-[#C77DFF] transition-colors cursor-pointer">SpectoV</span>
-                <span className="mx-2">•</span>
-                <span className="text-[#FF6B6B] font-medium hover:text-[#FF8E53] transition-colors cursor-pointer">Internshipkaro</span>
-              </div>
-            </div>
-          </div>
+         {/* Powered By Section */}
+<div className={`text-center md:text-right transition-all duration-1000 delay-500 ${
+  isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+}`}>
+  <div 
+    className="p-4 rounded-2xl bg-gradient-to-r from-gray-900/30 to-gray-800/30 border border-gray-700/30 hover:from-gray-800/40 hover:to-gray-700/40 hover:border-gray-600/40 hover:shadow-lg hover:shadow-blue-500/10 hover:scale-105 transition-all duration-300 cursor-pointer group"
+    onClick={() => window.open('https://sankalp.spectov.in', '_blank')}
+  >
+    <div className="flex items-center justify-center md:justify-end space-x-2 mb-2">
+      <span className="text-sm font-semibold text-gray-300 group-hover:text-white transition-colors">Powered by</span>
+    </div>
+    <div className="text-sm text-gray-400">
+      <span className="text-[#3A86FF] font-medium group-hover:text-[#5B9CFF] transition-colors">Sankalp</span>
+      <span className="mx-2">•</span>
+      <span className="text-[#9D4EDD] font-medium group-hover:text-[#C77DFF] transition-colors">SpectoV</span>
+      <span className="mx-2">•</span>
+      <span className="text-[#FF6B6B] font-medium group-hover:text-[#FF8E53] transition-colors">Internshipkaro</span>
+    </div>
+  </div>
+</div>
         </div>
 
         {/* Animated Divider */}

@@ -63,11 +63,8 @@ const CTA = () => {
           <h2 className="text-4xl md:text-6xl font-bold mb-8 text-blue-200 relative group">
             <span className="relative inline-block">
               Why Choose{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#3A86FF] via-[#9D4EDD] to-[#C77DFF] 
-                             animate-gradient-x bg-300% relative">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#3A86FF] via-[#9D4EDD] to-[#C77DFF]">
                 UMANG
-                <div className="absolute -inset-1 bg-gradient-to-r from-[#3A86FF] via-[#9D4EDD] to-[#C77DFF] 
-                               rounded-lg blur opacity-20 group-hover:opacity-40 transition duration-1000 animate-tilt"></div>
               </span>
               ?
             </span>
@@ -152,7 +149,7 @@ const CTA = () => {
                 
                 {/* Button content */}
                 <span className="relative z-10 flex items-center space-x-3">
-                  <Rocket size={24} className="group-hover:rotate-12 transition-transform duration-300" />
+                  
                   <span>Start Your Journey</span>
                   <ArrowRight size={24} className="group-hover:translate-x-1 transition-transform duration-300" />
                 </span>
