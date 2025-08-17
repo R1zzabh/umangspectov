@@ -23,6 +23,8 @@ def get_allowed_origins():
         "http://127.0.0.1:5173",
         "http://localhost:5500",
         "http://127.0.0.1:5500",
+        "https://umang.sankalp.spectov.in/#faqs",
+        "https://umang.sankalp.spectov.in/"
     ]
 
 def should_auto_create_tables() -> bool:
