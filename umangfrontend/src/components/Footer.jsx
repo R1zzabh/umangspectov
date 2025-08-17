@@ -177,11 +177,10 @@ const Footer = () => {
     onClick={() => window.open('https://sankalp.spectov.in', '_blank')}
   >
     <div className="flex items-center justify-center md:justify-end space-x-2 mb-2">
-      <span className="text-sm font-semibold text-gray-300 group-hover:text-white transition-colors">Powered by</span>
+      <span className="text-sm font-semibold text-gray-300 group-hover:text-white transition-colors">Powered by <span className="text-[#3A86FF] font-medium group-hover:text-[#5B9CFF] transition-colors">Sankalp</span></span>
     </div>
     <div className="text-sm text-gray-400">
-      <span className="text-[#3A86FF] font-medium group-hover:text-[#5B9CFF] transition-colors">Sankalp</span>
-      <span className="mx-2">•</span>
+      <span className="text-sm font-semibold text-gray-300 group-hover:text-white transition-colors">Sponsers: &nbsp;</span>
       <span className="text-[#9D4EDD] font-medium group-hover:text-[#C77DFF] transition-colors">SpectoV</span>
       <span className="mx-2">•</span>
       <span className="text-[#FF6B6B] font-medium group-hover:text-[#FF8E53] transition-colors">Internshipkaro</span>
