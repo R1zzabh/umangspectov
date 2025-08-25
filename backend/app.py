@@ -1,21 +1,20 @@
-# app.py (unified dev + prod)
 import os
 from flask import Flask, jsonify
 from flask_cors import CORS
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from config import Settings
 from models import db
 from routes import bp
 
-# Helpers
 def is_production() -> bool:
     return os.getenv("ENV", "").lower() in ("prod", "production")
 
 def get_allowed_origins():
-    # Prod: use FRONTEND_ORIGINS env (comma-separated)
     if is_production():
         return Settings.FRONTEND_ORIGINS or []
-    # Dev defaults
     return [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
@@ -23,24 +22,13 @@ def get_allowed_origins():
         "http://127.0.0.1:5173",
         "http://localhost:5500",
         "http://127.0.0.1:5500",
-        "https://umang.sankalp.spectov.in",
     ]
 
 def should_auto_create_tables() -> bool:
-    # Safe for dev; in prod prefer migrations, but allow toggle via env
     return os.getenv("AUTO_CREATE_TABLES", "1" if not is_production() else "0") in ("1", "true", "True")
 
-
 def create_app() -> Flask:
-    if not is_production():
-        try:
-            from dotenv import load_dotenv
-            load_dotenv()
-        except Exception:
-            pass
-
     app = Flask(__name__)
-
 
     app.config["SECRET_KEY"] = Settings.SECRET_KEY or ("dev-only" if not is_production() else None)
     app.config["SQLALCHEMY_DATABASE_URI"] = Settings.SQLALCHEMY_DATABASE_URI
@@ -50,7 +38,7 @@ def create_app() -> Flask:
     CORS(app, resources={r"/api/*": {"origins": get_allowed_origins()}})
 
     db.init_app(app)
-    app.register_blueprint(bp)  # provides /api/submissions (POST) and any other API routes
+    app.register_blueprint(bp)
 
     if should_auto_create_tables():
         with app.app_context():
@@ -70,10 +58,8 @@ def create_app() -> Flask:
 
     return app
 
-
-# Dev entrypoint; in production Passenger/Gunicorn imports create_app() instead
 if __name__ == "__main__":
     app = create_app()
-    port = int(os.getenv("PORT", "5001"))
+    port = int(os.getenv("PORT", "5000"))
     debug = not is_production()
     app.run(host="0.0.0.0", port=port, debug=debug)
