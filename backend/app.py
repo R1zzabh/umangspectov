@@ -14,7 +14,8 @@ def is_production() -> bool:
 
 def get_allowed_origins():
     if is_production():
-        return Settings.FRONTEND_ORIGINS or []
+        return ["https://umang.sankalp.spectov.in"] + (Settings.FRONTEND_ORIGINS or [])
+
     return [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
