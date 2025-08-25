@@ -13,7 +13,7 @@ const RegisterForm = () => {
     participatedInHackathon: '',
     linkedinUrl: ''
   });
-
+ const API_URL = 'https://umangspectov.onrender.com';
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -99,28 +99,25 @@ const RegisterForm = () => {
     }
 
     setIsSubmitting(true);
-
-    try {
-      // Prepare data for API submission
+     try {
+      // *** FIX 1: Convert frontend camelCase to backend snake_case ***
       const submissionData = {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
         university: formData.university,
-        universityLocation: formData.universityLocation,
-        graduationYear: formData.graduationYear,
-        preferredDomain: formData.preferredDomain,
+        university_location: formData.universityLocation,
+        graduation_year: formData.graduationYear,
+        preferred_domain: formData.preferredDomain,
         cgpa: formData.cgpa,
-        participatedInHackathon: formData.participatedInHackathon === 'Yes' ? 'true' : 'false',
-        linkedinUrl: formData.linkedinUrl
+        participated_in_hackathon: formData.participatedInHackathon === 'yes',
+        linkedin_url: formData.linkedinUrl
       };
 
-      // Make API call to backend
-      const response = await fetch('http://localhost:5001/api/submissions', {
+      // *** FIX 2: Use the correct API_URL constant ***
+      const response = await fetch(`${API_URL}/api/submissions`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(submissionData)
       });
 
