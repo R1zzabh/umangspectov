@@ -26,16 +26,13 @@ const RegisterForm = () => {
   const domains = [
     'Web Development',
     'Mobile App Development',
-    'Data Science & Analytics',
-    'Machine Learning & AI',
+    'Data Analytics',
+    'Competitive Programming',
+    'Machine Learning',
+    'Generative AI',
+    'Deep Learning',
     'Cloud Computing',
-    'Cybersecurity',
-    'DevOps',
-    'UI/UX Design',
-    'Software Testing',
-    'Blockchain Development',
-    'Game Development',
-    'Digital Marketing'
+    'DevOps'
   ];
 
   const handleInputChange = (e) => {
@@ -422,10 +419,10 @@ try {
             {/* Additional Info */}
             <div className="text-center mt-8 p-6 bg-gradient-to-r from-[#3A86FF]/10 to-[#9D4EDD]/10 rounded-xl border border-[#3A86FF]/20">
               <p className="text-sm text-gray-300 mb-2">
-                🎉 <strong className="text-[#3A86FF]">Completely FREE</strong> - No hidden charges, no fees
+                <strong className="text-[#3A86FF]">Completely FREE</strong> - No hidden charges, no fees
               </p>
               <p className="text-sm text-gray-300">
-                📧 You'll receive a confirmation email within 24-48 hours
+               You'll receive a confirmation email within 24-48 hours!
               </p>
             </div>
             </form>
