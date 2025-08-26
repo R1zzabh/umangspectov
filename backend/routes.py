@@ -3,7 +3,9 @@ import logging
 import traceback
 from flask import Blueprint, request, jsonify
 from sqlalchemy.exc import IntegrityError
+from flask_mail import Message
 from models import db, Applicant
+from app import mail
 
 # ------------------------
 # Logging setup
@@ -102,6 +104,27 @@ def create_submission():
         db.session.add(a)
         db.session.commit()
         logger.info(f"Applicant inserted successfully: {a}")
+
+        # ✅ Send confirmation email
+        try:
+            subject = "Application Received - Thank You!"
+            body = f"""
+            Hi {a.name},
+
+            Thank you for applying!
+            We have received your application for the {a.preferred_domain} domain.
+
+            Our team will review your submission and get back to you soon.
+
+            Regards,
+            Sankalp Admin
+            """
+            msg = Message(subject, recipients=[a.email], body=body)
+            mail.send(msg)
+            logger.info(f"Confirmation email sent to {a.email}")
+        except Exception as e:
+            logger.error(f"Failed to send email to {a.email}: {e}")
+
     except IntegrityError:
         db.session.rollback()
         logger.warning(f"Duplicate email attempted: {email}")
