@@ -3,6 +3,7 @@ import logging
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from dotenv import load_dotenv
+from flask_mail import Mail
 
 load_dotenv()
 
@@ -19,6 +20,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+mail = Mail()
+
 def is_production() -> bool:
     return os.getenv("ENV", "").lower() in ("prod", "production")
 
@@ -27,7 +30,6 @@ def get_allowed_origins():
         origins = ["https://umang.sankalp.spectov.in"] + (Settings.FRONTEND_ORIGINS or [])
         logger.info(f"Allowed origins (prod): {origins}")
         return origins
-
     dev_origins = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
@@ -47,16 +49,27 @@ def should_auto_create_tables() -> bool:
 def create_app() -> Flask:
     app = Flask(__name__)
 
+    # DB config
     app.config["SECRET_KEY"] = Settings.SECRET_KEY or ("dev-only" if not is_production() else None)
     app.config["SQLALCHEMY_DATABASE_URI"] = Settings.SQLALCHEMY_DATABASE_URI
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["SQLALCHEMY_ENGINE_OPTIONS"] = Settings.SQLALCHEMY_ENGINE_OPTIONS
 
-    logger.info(f"Using database: {app.config['SQLALCHEMY_DATABASE_URI']}")
+    # Email config
+    app.config.update(
+        MAIL_SERVER=Settings.EMAIL_HOST,
+        MAIL_PORT=Settings.EMAIL_PORT,
+        MAIL_USE_TLS=Settings.EMAIL_USE_TLS,
+        MAIL_USERNAME=Settings.EMAIL_USER,
+        MAIL_PASSWORD=Settings.EMAIL_PASSWORD,
+        MAIL_DEFAULT_SENDER=Settings.EMAIL_FROM,
+    )
+    logger.info(f"Mail configured: server={Settings.EMAIL_HOST}, port={Settings.EMAIL_PORT}, user={Settings.EMAIL_USER}")
 
     CORS(app, resources={r"/api/*": {"origins": get_allowed_origins()}})
 
     db.init_app(app)
+    mail.init_app(app)
     app.register_blueprint(bp)
 
     if should_auto_create_tables():
