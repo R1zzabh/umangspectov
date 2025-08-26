@@ -1,5 +1,5 @@
 import re
-from decimal import Decimal, InvalidOperation # 1. Import Decimal
+import traceback
 from flask import Blueprint, request, jsonify, url_for
 from sqlalchemy.exc import IntegrityError
 from models import db, Applicant
@@ -14,8 +14,10 @@ def _as_bool(v):
     if v is None:
         return None
     s = str(v).strip().lower()
-    if s in ("1", "true", "yes", "y"): return True
-    if s in ("0", "false", "no", "n"): return False
+    if s in ("1", "true", "yes", "y"): 
+        return True
+    if s in ("0", "false", "no", "n"): 
+        return False
     return None
 
 def _maxlen(s, n):
@@ -23,8 +25,15 @@ def _maxlen(s, n):
 
 @bp.post("/api/submissions")
 def create_submission():
+    """
+    Accepts JSON or form-encoded data; returns JSON.
+    Fields: name, email, phone, university, university_location,
+            graduation_year, preferred_domain, cgpa,
+            participated_in_hackathon, linkedin_url
+    """
     data = request.get_json(silent=True) or request.form
 
+    # Support both camelCase (frontend) and snake_case (backend) field names
     name = (data.get("name") or "").strip()
     email = (data.get("email") or "").strip().lower()
     phone = (data.get("phone") or "").strip()
@@ -47,14 +56,12 @@ def create_submission():
     if not preferred_domain: errors.append("preferred_domain is required")
 
     try:
-        cgpa_val = Decimal(cgpa_raw)
-        if not (Decimal("0.0") <= cgpa_val <= Decimal("10.0")):
+        cgpa_val = float(cgpa_raw)
+        if not (0.0 <= cgpa_val <= 10.0):
             raise ValueError
-    except InvalidOperation:
-        errors.append("cgpa must be a valid number")
-    except ValueError:
+    except Exception:
         errors.append("cgpa must be between 0 and 10")
-    
+
     if participated is None:
         errors.append("participated_in_hackathon must be boolean/0/1")
 
@@ -80,7 +87,7 @@ def create_submission():
         university_location=university_location,
         graduation_year=int(graduation_year),
         preferred_domain=preferred_domain,
-        cgpa=cgpa_val, 
+        cgpa=round(cgpa_val, 2),
         participated_in_hackathon=bool(participated),
         linkedin_url=linkedin_url or None,
     )
@@ -91,9 +98,13 @@ def create_submission():
     except IntegrityError:
         db.session.rollback()
         return jsonify({"ok": False, "error": "duplicate email"}), 409
-    except Exception:
+    except Exception as e:
         db.session.rollback()
+        # 🔴 Debug log for unexpected DB errors
+        print("Unexpected error while inserting applicant:", e)
+        traceback.print_exc()
         return jsonify({"ok": False, "error": "unexpected error"}), 500
 
+    # Return success response
     resp = jsonify({"ok": True, "id": a.id})
     return resp, 201
