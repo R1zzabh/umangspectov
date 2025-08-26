@@ -1,22 +1,29 @@
 import re
+import logging
 import traceback
-from flask import Blueprint, request, jsonify, url_for
+from flask import Blueprint, request, jsonify
 from sqlalchemy.exc import IntegrityError
 from models import db, Applicant
+
+# ------------------------
+# Logging setup
+# ------------------------
+logger = logging.getLogger("routes")
 
 bp = Blueprint("api", __name__)
 
 @bp.get("/health")
 def health():
+    logger.info("Health check called")
     return jsonify({"status": "ok"}), 200
 
 def _as_bool(v):
     if v is None:
         return None
     s = str(v).strip().lower()
-    if s in ("1", "true", "yes", "y"): 
+    if s in ("1", "true", "yes", "y"):
         return True
-    if s in ("0", "false", "no", "n"): 
+    if s in ("0", "false", "no", "n"):
         return False
     return None
 
@@ -25,13 +32,10 @@ def _maxlen(s, n):
 
 @bp.post("/api/submissions")
 def create_submission():
-    """
-    Accepts JSON or form-encoded data; returns JSON.
-    Fields: name, email, phone, university, university_location,
-            graduation_year, preferred_domain, cgpa,
-            participated_in_hackathon, linkedin_url
-    """
+    logger.info("POST /api/submissions called")
+
     data = request.get_json(silent=True) or request.form
+    logger.info(f"Incoming data: {dict(data)}")
 
     # Support both camelCase (frontend) and snake_case (backend) field names
     name = (data.get("name") or "").strip()
@@ -68,6 +72,7 @@ def create_submission():
     if linkedin_url and not re.match(r"^https?://(www\.)?linkedin\.com/.*", linkedin_url, flags=re.I):
         errors.append("linkedin_url must be a valid linkedin.com link")
 
+    # Enforce max lengths
     name = _maxlen(name, 100)
     email = _maxlen(email, 255)
     phone = _maxlen(phone, 20)
@@ -77,6 +82,7 @@ def create_submission():
     linkedin_url = _maxlen(linkedin_url, 255)
 
     if errors:
+        logger.warning(f"Validation failed: {errors}")
         return jsonify({"ok": False, "errors": errors}), 422
 
     a = Applicant(
@@ -95,16 +101,17 @@ def create_submission():
     try:
         db.session.add(a)
         db.session.commit()
+        logger.info(f"Applicant inserted successfully: {a}")
     except IntegrityError:
         db.session.rollback()
+        logger.warning(f"Duplicate email attempted: {email}")
         return jsonify({"ok": False, "error": "duplicate email"}), 409
     except Exception as e:
         db.session.rollback()
-        # 🔴 Debug log for unexpected DB errors
-        print("Unexpected error while inserting applicant:", e)
-        traceback.print_exc()
+        logger.error("Unexpected error while inserting applicant", exc_info=True)
         return jsonify({"ok": False, "error": "unexpected error"}), 500
 
     # Return success response
     resp = jsonify({"ok": True, "id": a.id})
+    logger.info(f"Submission successful, id={a.id}")
     return resp, 201
