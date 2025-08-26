@@ -3,24 +3,18 @@ import logging
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from dotenv import load_dotenv
-from flask_mail import Mail
 
 load_dotenv()
 
 from config import Settings
-from models import db
+from extensions import db, mail
 from routes import bp
 
-# ------------------------
-# Logging setup
-# ------------------------
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
 )
 logger = logging.getLogger(__name__)
-
-mail = Mail()
 
 def is_production() -> bool:
     return os.getenv("ENV", "").lower() in ("prod", "production")
