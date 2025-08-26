@@ -3,8 +3,8 @@ import logging
 from flask import Blueprint, request, jsonify
 from sqlalchemy.exc import IntegrityError
 from flask_mail import Message
-from models import db, Applicant
-from app import mail
+from extensions import db, mail
+from models import Applicant
 
 logger = logging.getLogger("routes")
 
@@ -33,7 +33,7 @@ def create_submission():
     data = request.get_json(silent=True) or request.form
     logger.info(f"Incoming data: {dict(data)}")
 
-    # Extract fields
+    # Extract + validate
     name = (data.get("name") or "").strip()
     email = (data.get("email") or "").strip().lower()
     phone = (data.get("phone") or "").strip()
@@ -45,7 +45,6 @@ def create_submission():
     participated = _as_bool(data.get("participated_in_hackathon") or data.get("participatedInHackathon"))
     linkedin_url = (data.get("linkedin_url") or data.get("linkedinUrl") or "").strip()
 
-    # Validation
     errors = []
     if not name: errors.append("name is required")
     if not email or not re.match(r"^[^@]+@[^@]+\.[^@]+$", email): errors.append("valid email required")
@@ -55,17 +54,20 @@ def create_submission():
     if not graduation_year.isdigit() or not (1990 <= int(graduation_year) <= 2100):
         errors.append("graduation_year invalid")
     if not preferred_domain: errors.append("preferred_domain is required")
+
     try:
         cgpa_val = float(cgpa_raw)
         if not (0.0 <= cgpa_val <= 10.0): raise ValueError
     except Exception:
         errors.append("cgpa must be between 0 and 10")
+
     if participated is None:
         errors.append("participated_in_hackathon must be boolean/0/1")
+
     if linkedin_url and not re.match(r"^https?://(www\.)?linkedin\.com/.*", linkedin_url, flags=re.I):
         errors.append("linkedin_url must be a valid linkedin.com link")
 
-    # enforce lengths
+    # enforce max length
     name = _maxlen(name, 100)
     email = _maxlen(email, 255)
     phone = _maxlen(phone, 20)
