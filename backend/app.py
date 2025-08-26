@@ -2,8 +2,8 @@ import os
 import logging
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-from flask_mail import Mail
 from dotenv import load_dotenv
+from flask_mail import Mail
 
 load_dotenv()
 
@@ -20,7 +20,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Flask-Mail instance
 mail = Mail()
 
 def is_production() -> bool:
@@ -31,7 +30,6 @@ def get_allowed_origins():
         origins = ["https://umang.sankalp.spectov.in"] + (Settings.FRONTEND_ORIGINS or [])
         logger.info(f"Allowed origins (prod): {origins}")
         return origins
-
     dev_origins = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
@@ -57,34 +55,28 @@ def create_app() -> Flask:
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["SQLALCHEMY_ENGINE_OPTIONS"] = Settings.SQLALCHEMY_ENGINE_OPTIONS
 
-    logger.info(f"Using database: {app.config['SQLALCHEMY_DATABASE_URI']}")
+    # Email config
+    app.config.update(
+        MAIL_SERVER=Settings.EMAIL_HOST,
+        MAIL_PORT=Settings.EMAIL_PORT,
+        MAIL_USE_TLS=Settings.EMAIL_USE_TLS,
+        MAIL_USERNAME=Settings.EMAIL_USER,
+        MAIL_PASSWORD=Settings.EMAIL_PASSWORD,
+        MAIL_DEFAULT_SENDER=Settings.EMAIL_FROM,
+    )
+    logger.info(f"Mail configured: server={Settings.EMAIL_HOST}, port={Settings.EMAIL_PORT}, user={Settings.EMAIL_USER}")
 
-    # CORS config
     CORS(app, resources={r"/api/*": {"origins": get_allowed_origins()}})
 
-    # DB init
     db.init_app(app)
+    mail.init_app(app)
     app.register_blueprint(bp)
 
-    # Auto-create tables (if enabled)
     if should_auto_create_tables():
         with app.app_context():
             logger.info("Auto-creating tables...")
             db.create_all()
 
-    # Mail config
-    app.config.update(
-        MAIL_SERVER=Settings.MAIL_SERVER,
-        MAIL_PORT=Settings.MAIL_PORT,
-        MAIL_USE_TLS=Settings.MAIL_USE_TLS,
-        MAIL_USERNAME=Settings.MAIL_USERNAME,
-        MAIL_PASSWORD=Settings.MAIL_PASSWORD,
-        MAIL_DEFAULT_SENDER=Settings.MAIL_DEFAULT_SENDER,
-    )
-    mail.init_app(app)
-    logger.info(f"Mail configured: server={Settings.MAIL_SERVER}, sender={Settings.MAIL_DEFAULT_SENDER}")
-
-    # Request/response logging
     @app.before_request
     def log_request():
         logger.info(f"Incoming {request.method} {request.path} from {request.remote_addr}")
@@ -94,12 +86,10 @@ def create_app() -> Flask:
         logger.info(f"Response {response.status_code} for {request.method} {request.path}")
         return response
 
-    # Health endpoint
     @app.get("/health")
     def health():
         return jsonify({"status": "ok"}), 200
 
-    # Error handlers
     @app.errorhandler(422)
     def handle_422(err):
         logger.error(f"422 Error: {err}")
