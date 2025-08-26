@@ -12,7 +12,7 @@ logging.basicConfig(
 logger = logging.getLogger("config")
 
 class Settings:
-    SECRET_KEY = os.getenv("SECRET_KEY")                 # required in prod
+    SECRET_KEY = os.getenv("SECRET_KEY")
     ENV = os.getenv("ENV", "development").lower()
     logger.info(f"ENV={ENV}")
 
@@ -26,7 +26,6 @@ class Settings:
 
     DB_URL = os.getenv("DB_URL")
     if not DB_URL:
-        # Use SQLite for development if no DB_URL is provided
         if ENV in ("prod", "production"):
             DB_USER = os.getenv("DB_USER", "root")
             DB_PASS = quote_plus(os.getenv("DB_PASS", ""))
@@ -35,7 +34,6 @@ class Settings:
             DB_URL = f"mysql+pymysql://{DB_USER}:{DB_PASS}@{DB_HOST}/{DB_NAME}?charset=utf8mb4"
             logger.info(f"DB connection string built for MySQL on host={DB_HOST}, db={DB_NAME}, user={DB_USER}")
         else:
-            # Development: use SQLite
             DB_URL = "sqlite:///applicant_db.sqlite"
             logger.info("Using SQLite (development fallback)")
     else:
@@ -44,18 +42,13 @@ class Settings:
     SQLALCHEMY_DATABASE_URI = DB_URL
     logger.info(f"SQLALCHEMY_DATABASE_URI={SQLALCHEMY_DATABASE_URI}")
 
-    # SQLALCHEMY ENGINE TUNING
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SQLALCHEMY_ECHO = False  # flip to True if debugging SQL locally
+    SQLALCHEMY_ECHO = False
 
-    # allow env overrides; sensible defaults
     if DB_URL.startswith("sqlite"):
-        SQLALCHEMY_ENGINE_OPTIONS = {
-            "pool_pre_ping": True,
-        }
+        SQLALCHEMY_ENGINE_OPTIONS = {"pool_pre_ping": True}
         logger.info("Engine options set for SQLite")
     else:
-        # MySQL-specific options
         SQLALCHEMY_ENGINE_OPTIONS = {
             "pool_pre_ping": True,
             "pool_recycle": int(os.getenv("SQL_POOL_RECYCLE", "280")),
@@ -73,16 +66,13 @@ class Settings:
     logger.info(f"FRONTEND_ORIGINS={FRONTEND_ORIGINS}")
 
     # ------------------------
-    # MAIL SETTINGS
+    # Email settings
     # ------------------------
-    MAIL_SERVER = os.getenv("MAIL_SERVER", "smtp.gmail.com")
-    MAIL_PORT = int(os.getenv("MAIL_PORT", "587"))
-    MAIL_USE_TLS = os.getenv("MAIL_USE_TLS", "1") in ("1", "true", "True")
-    MAIL_USERNAME = os.getenv("MAIL_USERNAME")
-    MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")
-    MAIL_DEFAULT_SENDER = os.getenv("MAIL_DEFAULT_SENDER", MAIL_USERNAME)
+    EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
+    EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
+    EMAIL_USER = os.getenv("EMAIL_USER")
+    EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
+    EMAIL_FROM = os.getenv("EMAIL_FROM", f"Sankalp Admin <{EMAIL_USER}>")
+    EMAIL_USE_TLS = os.getenv("EMAIL_SECURE", "true").lower() in ("1", "true", "yes")
 
-    logger.info(
-        f"MAIL settings -> server={MAIL_SERVER}, port={MAIL_PORT}, "
-        f"use_tls={MAIL_USE_TLS}, user={MAIL_USERNAME}, default_sender={MAIL_DEFAULT_SENDER}"
-    )
+    logger.info(f"Email configured: host={EMAIL_HOST}, port={EMAIL_PORT}, user={EMAIL_USER}, tls={EMAIL_USE_TLS}")
