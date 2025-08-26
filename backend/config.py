@@ -71,3 +71,18 @@ class Settings:
 
     FRONTEND_ORIGINS = [o.strip() for o in os.getenv("FRONTEND_ORIGINS", "").split(",") if o.strip()]
     logger.info(f"FRONTEND_ORIGINS={FRONTEND_ORIGINS}")
+
+    # ------------------------
+    # MAIL SETTINGS
+    # ------------------------
+    MAIL_SERVER = os.getenv("MAIL_SERVER", "smtp.gmail.com")
+    MAIL_PORT = int(os.getenv("MAIL_PORT", "587"))
+    MAIL_USE_TLS = os.getenv("MAIL_USE_TLS", "1") in ("1", "true", "True")
+    MAIL_USERNAME = os.getenv("MAIL_USERNAME")
+    MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")
+    MAIL_DEFAULT_SENDER = os.getenv("MAIL_DEFAULT_SENDER", MAIL_USERNAME)
+
+    logger.info(
+        f"MAIL settings -> server={MAIL_SERVER}, port={MAIL_PORT}, "
+        f"use_tls={MAIL_USE_TLS}, user={MAIL_USERNAME}, default_sender={MAIL_DEFAULT_SENDER}"
+    )
