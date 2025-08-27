@@ -18,16 +18,18 @@ def health():
 
 
 def _as_bool(v):
-    """Coerce frontend value into boolean or None if invalid"""
+    """Coerce value into bool; return None if not recognizable."""
     if isinstance(v, bool):
         return v
     if v is None:
         return None
+    # numbers
     try:
         if isinstance(v, (int, float)):
             return bool(int(v))
     except Exception:
         pass
+    # strings
     s = str(v).strip().lower()
     if s in ("1", "true", "yes", "y", "on"):
         return True
@@ -49,7 +51,11 @@ def create_submission():
     if not data:
         return jsonify({"ok": False, "error": "Invalid data"}), 400
 
-    logger.info(f"Incoming data: {dict(data)}")
+    # For logging, make sure we can stringify
+    try:
+        logger.info(f"Incoming data: {dict(data)}")
+    except Exception:
+        logger.info("Incoming data received")
 
     # Extract fields (support camelCase and snake_case)
     name = (data.get("name") or "").strip()
@@ -60,7 +66,11 @@ def create_submission():
     graduation_year = (data.get("graduation_year") or data.get("graduationYear") or "").strip()
     preferred_domain = (data.get("preferred_domain") or data.get("preferredDomain") or "").strip()
     cgpa_raw = (data.get("cgpa") or "").strip()
-    participated = _as_bool(data.get("participated_in_hackathon") or data.get("participatedInHackathon"))
+    # IMPORTANT: don't use `or` for booleans—False would be dropped
+    participated_val = data.get("participated_in_hackathon")
+    if participated_val is None:
+        participated_val = data.get("participatedInHackathon")
+    participated = _as_bool(participated_val)
     linkedin_url = (data.get("linkedin_url") or data.get("linkedinUrl") or "").strip()
 
     # Validation
@@ -80,11 +90,12 @@ def create_submission():
     if not preferred_domain:
         errors.append("preferred_domain is required")
 
-    # CGPA validation (matches DECIMAL(4,2))
+    # CGPA validation for DECIMAL(4,2)
     try:
         cgpa_val = Decimal(cgpa_raw)
-        if not (Decimal("0.0") <= cgpa_val <= Decimal("10.0")):
+        if not (Decimal("0.00") <= cgpa_val <= Decimal("10.00")):
             raise ValueError
+        cgpa_val = cgpa_val.quantize(Decimal("0.01"))
     except (InvalidOperation, ValueError):
         errors.append("cgpa must be a valid number between 0 and 10")
 
@@ -107,7 +118,7 @@ def create_submission():
         logger.warning(f"Validation failed: {errors}")
         return jsonify({"ok": False, "errors": errors}), 422
 
-    # Create Applicant object
+    # Create Applicant row
     a = Applicant(
         name=name,
         email=email,
@@ -116,8 +127,8 @@ def create_submission():
         university_location=university_location,
         graduation_year=int(graduation_year),
         preferred_domain=preferred_domain,
-        cgpa=cgpa_val,  # Decimal stored into DECIMAL(4,2)
-        participated_in_hackathon=participated,
+        cgpa=cgpa_val,  # DECIMAL aligns with MySQL DECIMAL(4,2)
+        participated_in_hackathon=participated,  # bool → TINYINT(1)
         linkedin_url=linkedin_url or None,
     )
 
@@ -126,23 +137,23 @@ def create_submission():
         db.session.commit()
         logger.info(f"Applicant inserted successfully: {a}")
 
-        # Send confirmation email
+        # Attempt confirmation email (non-fatal if it fails)
         try:
             msg = Message(
                 subject="Application Received - Sankalp",
                 recipients=[email],
-                body=f"Hi {name},\n\nThank you for your interest! We have received your application successfully.\n\nRegards,\nSankalp Team"
+                body=f"Hi {name},\n\nThank you for your interest! We have received your application successfully.\n\nRegards,\nSankalp Team",
             )
             mail.send(msg)
             logger.info(f"Confirmation email sent to {email}")
-        except Exception as e:
+        except Exception:
             logger.exception(f"Failed to send confirmation email to {email}")
 
     except IntegrityError:
         db.session.rollback()
         logger.warning(f"Duplicate email attempted: {email}")
         return jsonify({"ok": False, "error": "duplicate email"}), 409
-    except Exception as e:
+    except Exception:
         db.session.rollback()
         logger.exception("Unexpected error while inserting applicant")
         return jsonify({"ok": False, "error": "unexpected error"}), 500
