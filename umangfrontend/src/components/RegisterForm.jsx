@@ -1,4 +1,92 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+
+// Toast Component
+const Toast = ({ message, type, isVisible, onClose }) => {
+  useEffect(() => {
+    if (isVisible) {
+      const timer = setTimeout(() => {
+        onClose();
+      }, 5000); // Auto close after 5 seconds
+
+      return () => clearTimeout(timer);
+    }
+  }, [isVisible, onClose]);
+
+  if (!isVisible) return null;
+
+  const getToastStyles = () => {
+    switch (type) {
+      case 'success':
+        return 'bg-gradient-to-r from-green-500 to-emerald-500 border-green-400';
+      case 'error':
+        return 'bg-gradient-to-r from-red-500 to-pink-500 border-red-400';
+      case 'warning':
+        return 'bg-gradient-to-r from-yellow-500 to-orange-500 border-yellow-400';
+      default:
+        return 'bg-gradient-to-r from-blue-500 to-purple-500 border-blue-400';
+    }
+  };
+
+  const getIcon = () => {
+    switch (type) {
+      case 'success':
+        return (
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+          </svg>
+        );
+      case 'error':
+        return (
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        );
+      case 'warning':
+        return (
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+          </svg>
+        );
+      default:
+        return (
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        );
+    }
+  };
+
+  return (
+    <div className="fixed top-0 left-0 right-0 z-50 flex justify-center">
+      <div
+        className={`
+          ${getToastStyles()}
+          text-white px-6 py-4 rounded-lg shadow-2xl border
+          transform transition-all duration-500 ease-out
+          ${isVisible ? 'translate-y-6 opacity-100 scale-100' : '-translate-y-full opacity-0 scale-95'}
+          max-w-md mx-4 backdrop-blur-sm
+        `}
+      >
+        <div className="flex items-center space-x-3">
+          <div className="flex-shrink-0">
+            {getIcon()}
+          </div>
+          <div className="flex-1">
+            <p className="font-medium text-sm">{message}</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="flex-shrink-0 ml-4 hover:bg-white/20 rounded-full p-1 transition-colors duration-200"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const RegisterForm = () => {
   const [formData, setFormData] = useState({
@@ -13,9 +101,28 @@ const RegisterForm = () => {
     participatedInHackathon: '',
     linkedinUrl: ''
   });
- const API_URL = 'https://umangspectov.onrender.com';
+  
+  const [toast, setToast] = useState({
+    message: '',
+    type: 'info',
+    isVisible: false
+  });
+
+  const API_URL = 'https://umangspectov.onrender.com';
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const showToast = (message, type = 'info') => {
+    setToast({
+      message,
+      type,
+      isVisible: true
+    });
+  };
+
+  const hideToast = () => {
+    setToast(prev => ({ ...prev, isVisible: false }));
+  };
 
   const graduationYears = [];
   const currentYear = new Date().getFullYear();
@@ -91,16 +198,16 @@ const RegisterForm = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
+  const handleSubmit = async () => {
     if (!validateForm()) {
+      showToast('Please fix the errors in the form', 'error');
       return;
     }
 
     setIsSubmitting(true);
-     try {
-      // *** FIX 1: Convert frontend camelCase to backend snake_case ***
+
+    try {
+      // Convert frontend camelCase to backend snake_case
       const submissionData = {
         name: formData.name,
         email: formData.email,
@@ -114,7 +221,8 @@ const RegisterForm = () => {
         linkedin_url: formData.linkedinUrl
       };
 
-      // *** FIX 2: Use the correct API_URL constant ***
+      console.log(submissionData);
+
       const response = await fetch(`${API_URL}/api/submissions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -124,9 +232,7 @@ const RegisterForm = () => {
       const result = await response.json();
 
       if (response.ok && result.ok) {
-        // Use a custom modal or a more integrated notification instead of alert
-        // For now, we'll keep alert for simplicity
-        alert('Registration submitted successfully! Check your email for confirmation.');
+        showToast('Registration submitted successfully! Check your email for confirmation.', 'success');
 
         // Reset form
         setFormData({
@@ -162,272 +268,284 @@ const RegisterForm = () => {
 
           if (Object.keys(backendErrors).length > 0) {
             setErrors(backendErrors);
+            showToast('Please fix the errors highlighted below', 'error');
           } else {
-            alert('Please fix the following errors:\n' + result.errors.join('\n'));
+            showToast(`Please fix the following errors: ${result.errors.join(', ')}`, 'error');
           }
         } else if (result.error) {
           if (result.error === 'duplicate email') {
             setErrors({ email: 'This email is already registered. Please use a different email address.' });
+            showToast('This email is already registered', 'error');
           } else {
-            alert('Error: ' + result.error);
+            showToast(`Error: ${result.error}`, 'error');
           }
         } else {
-          alert('Something went wrong. Please try again.');
+          showToast('Something went wrong. Please try again.', 'error');
         }
       }
     } catch (error) {
       console.error('Submission error:', error);
-      alert('Network error. Please check your connection and try again.');
+      showToast('Network error. Please check your connection and try again.', 'error');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <section id="register" className="py-16 md:py-24 bg-gradient-to-br from-[#0D0D0D] via-[#1A1A1A] to-[#0D0D0D] px-4 min-h-screen">
-      <div className="container mx-auto max-w-3xl">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-5xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-[#3A86FF] to-[#9D4EDD] bg-clip-text text-transparent">
-            UMANG
-          </h1>
-          <p className="text-xl md:text-2xl text-gray-300 mb-2">
-            Unlock Your Potential, Shape Your Future
-          </p>
-          <p className="text-lg text-blue-400 font-semibold mb-6">
-            India's First Free Internship Training Program
-          </p>
-          <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-400">
-            <span className="bg-[#2A2A2A] px-3 py-1 rounded-full">Powered by Sankalp</span>
-            <span className="bg-[#2A2A2A] px-3 py-1 rounded-full">Sponsored by SpectoV</span>
-            <span className="bg-[#2A2A2A] px-3 py-1 rounded-full">Sponsored by Internshipkaro</span>
+    <>
+      <Toast 
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.isVisible}
+        onClose={hideToast}
+      />
+      
+      <section id="register" className="py-16 md:py-24 bg-gradient-to-br from-[#0D0D0D] via-[#1A1A1A] to-[#0D0D0D] px-4 min-h-screen">
+        <div className="container mx-auto max-w-3xl">
+          {/* Header */}
+          <div className="text-center mb-12">
+            <h1 className="text-5xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-[#3A86FF] to-[#9D4EDD] bg-clip-text text-transparent">
+              UMANG
+            </h1>
+            <p className="text-xl md:text-2xl text-gray-300 mb-2">
+              Unlock Your Potential, Shape Your Future
+            </p>
+            <p className="text-lg text-blue-400 font-semibold mb-6">
+              India's First Free Internship Training Program
+            </p>
+            <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-400">
+              <span className="bg-[#2A2A2A] px-3 py-1 rounded-full">Powered by Sankalp</span>
+              <span className="bg-[#2A2A2A] px-3 py-1 rounded-full">Sponsored by SpectoV</span>
+              <span className="bg-[#2A2A2A] px-3 py-1 rounded-full">Sponsored by Internshipkaro</span>
+            </div>
+          </div>
+
+          {/* Registration Form */}
+          <div className="bg-[#1F1F1F] rounded-2xl p-8 md:p-12 shadow-2xl border border-gray-800">
+            <h2 className="text-3xl md:text-4xl font-bold text-center mb-8 text-white">
+              Register Now
+            </h2>
+            
+            <div className="space-y-6">
+              {/* Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Full Name <span className="text-red-500">*</span>
+                </label>
+                <input 
+                  type="text" 
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  placeholder="Enter your full name" 
+                  className={`w-full p-4 rounded-xl bg-[#0D0D0D] border ${errors.name ? 'border-red-500' : 'border-gray-700'} focus:outline-none focus:border-[#3A86FF] focus:ring-2 focus:ring-[#3A86FF]/20 transition-all duration-300 text-white placeholder-gray-500`}
+                />
+                {errors.name && <p className="text-red-400 text-sm mt-1">{errors.name}</p>}
+              </div>
+
+              {/* Email */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Email Address <span className="text-red-500">*</span>
+                </label>
+                <input 
+                  type="email" 
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  placeholder="Enter your email address" 
+                  className={`w-full p-4 rounded-xl bg-[#0D0D0D] border ${errors.email ? 'border-red-500' : 'border-gray-700'} focus:outline-none focus:border-[#3A86FF] focus:ring-2 focus:ring-[#3A86FF]/20 transition-all duration-300 text-white placeholder-gray-500`}
+                />
+                {errors.email && <p className="text-red-400 text-sm mt-1">{errors.email}</p>}
+              </div>
+
+              {/* Phone */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Phone Number <span className="text-red-500">*</span>
+                </label>
+                <input 
+                  type="tel" 
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleInputChange}
+                  placeholder="Enter your phone number" 
+                  className={`w-full p-4 rounded-xl bg-[#0D0D0D] border ${errors.phone ? 'border-red-500' : 'border-gray-700'} focus:outline-none focus:border-[#3A86FF] focus:ring-2 focus:ring-[#3A86FF]/20 transition-all duration-300 text-white placeholder-gray-500`}
+                />
+                {errors.phone && <p className="text-red-400 text-sm mt-1">{errors.phone}</p>}
+              </div>
+
+              {/* University */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  University/College <span className="text-red-500">*</span>
+                </label>
+                <input 
+                  type="text" 
+                  name="university"
+                  value={formData.university}
+                  onChange={handleInputChange}
+                  placeholder="Enter your university/college name" 
+                  className={`w-full p-4 rounded-xl bg-[#0D0D0D] border ${errors.university ? 'border-red-500' : 'border-gray-700'} focus:outline-none focus:border-[#3A86FF] focus:ring-2 focus:ring-[#3A86FF]/20 transition-all duration-300 text-white placeholder-gray-500`}
+                />
+                {errors.university && <p className="text-red-400 text-sm mt-1">{errors.university}</p>}
+              </div>
+
+              {/* University Location */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  University Location <span className="text-red-500">*</span>
+                </label>
+                <input 
+                  type="text" 
+                  name="universityLocation"
+                  value={formData.universityLocation}
+                  onChange={handleInputChange}
+                  placeholder="Enter your university location (City, State)" 
+                  className={`w-full p-4 rounded-xl bg-[#0D0D0D] border ${errors.universityLocation ? 'border-red-500' : 'border-gray-700'} focus:outline-none focus:border-[#3A86FF] focus:ring-2 focus:ring-[#3A86FF]/20 transition-all duration-300 text-white placeholder-gray-500`}
+                />
+                {errors.universityLocation && <p className="text-red-400 text-sm mt-1">{errors.universityLocation}</p>}
+              </div>
+
+              {/* Graduation Year */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Graduation Year <span className="text-red-500">*</span>
+                </label>
+                <select 
+                  name="graduationYear"
+                  value={formData.graduationYear}
+                  onChange={handleInputChange}
+                  className={`w-full p-4 rounded-xl bg-[#0D0D0D] border ${errors.graduationYear ? 'border-red-500' : 'border-gray-700'} focus:outline-none focus:border-[#3A86FF] focus:ring-2 focus:ring-[#3A86FF]/20 transition-all duration-300 text-white`}
+                >
+                  <option value="">Select your expected graduation year</option>
+                  {graduationYears.map(year => (
+                    <option key={year} value={year} className="bg-[#0D0D0D]">{year}</option>
+                  ))}
+                </select>
+                {errors.graduationYear && <p className="text-red-400 text-sm mt-1">{errors.graduationYear}</p>}
+              </div>
+
+              {/* Preferred Domain */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Preferred Domain <span className="text-red-500">*</span>
+                </label>
+                <select 
+                  name="preferredDomain"
+                  value={formData.preferredDomain}
+                  onChange={handleInputChange}
+                  className={`w-full p-4 rounded-xl bg-[#0D0D0D] border ${errors.preferredDomain ? 'border-red-500' : 'border-gray-700'} focus:outline-none focus:border-[#3A86FF] focus:ring-2 focus:ring-[#3A86FF]/20 transition-all duration-300 text-white`}
+                >
+                  <option value="">Select your preferred domain</option>
+                  {domains.map(domain => (
+                    <option key={domain} value={domain} className="bg-[#0D0D0D]">{domain}</option>
+                  ))}
+                </select>
+                {errors.preferredDomain && <p className="text-red-400 text-sm mt-1">{errors.preferredDomain}</p>}
+              </div>
+
+              {/* CGPA */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  CGPA/Percentage <span className="text-red-500">*</span>
+                </label>
+                <input 
+                  type="number" 
+                  name="cgpa"
+                  value={formData.cgpa}
+                  onChange={handleInputChange}
+                  placeholder="Enter your CGPA (out of 10) or percentage" 
+                  step="0.01"
+                  min="0"
+                  max="10"
+                  className={`w-full p-4 rounded-xl bg-[#0D0D0D] border ${errors.cgpa ? 'border-red-500' : 'border-gray-700'} focus:outline-none focus:border-[#3A86FF] focus:ring-2 focus:ring-[#3A86FF]/20 transition-all duration-300 text-white placeholder-gray-500`}
+                />
+                {errors.cgpa && <p className="text-red-400 text-sm mt-1">{errors.cgpa}</p>}
+              </div>
+
+              {/* Participated in Hackathon */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Have you participated in any hackathon? <span className="text-red-500">*</span>
+                </label>
+                <div className="flex gap-6">
+                  <label className="flex items-center cursor-pointer">
+                    <input 
+                      type="radio" 
+                      name="participatedInHackathon"
+                      value="yes"
+                      checked={formData.participatedInHackathon === 'yes'}
+                      onChange={handleInputChange}
+                      className="mr-2 w-4 h-4 text-[#3A86FF] bg-[#0D0D0D] border-gray-600 focus:ring-[#3A86FF]"
+                    />
+                    <span className="text-white">Yes</span>
+                  </label>
+                  <label className="flex items-center cursor-pointer">
+                    <input 
+                      type="radio" 
+                      name="participatedInHackathon"
+                      value="no"
+                      checked={formData.participatedInHackathon === 'no'}
+                      onChange={handleInputChange}
+                      className="mr-2 w-4 h-4 text-[#3A86FF] bg-[#0D0D0D] border-gray-600 focus:ring-[#3A86FF]"
+                    />
+                    <span className="text-white">No</span>
+                  </label>
+                </div>
+                {errors.participatedInHackathon && <p className="text-red-400 text-sm mt-1">{errors.participatedInHackathon}</p>}
+              </div>
+
+              {/* LinkedIn URL */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  LinkedIn Profile URL (Optional)
+                </label>
+                <input 
+                  type="url" 
+                  name="linkedinUrl"
+                  value={formData.linkedinUrl}
+                  onChange={handleInputChange}
+                  placeholder="https://www.linkedin.com/in/yourprofile" 
+                  className={`w-full p-4 rounded-xl bg-[#0D0D0D] border ${errors.linkedinUrl ? 'border-red-500' : 'border-gray-700'} focus:outline-none focus:border-[#3A86FF] focus:ring-2 focus:ring-[#3A86FF]/20 transition-all duration-300 text-white placeholder-gray-500`}
+                />
+                {errors.linkedinUrl && <p className="text-red-400 text-sm mt-1">{errors.linkedinUrl}</p>}
+              </div>
+
+              {/* Submit Button */}
+              <button 
+                type="button"
+                disabled={isSubmitting}
+                onClick={handleSubmit}
+                className="w-full px-8 py-5 bg-gradient-to-r from-[#3A86FF] to-[#9D4EDD] text-white font-semibold text-lg rounded-xl shadow-2xl hover:shadow-[#3A86FF]/25 hover:from-[#4A96FF] hover:to-[#AD5EEE] transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              >
+                {isSubmitting ? (
+                  <span className="flex items-center justify-center">
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Submitting...
+                  </span>
+                ) : (
+                  'Register for UMANG'
+                )}
+              </button>
+
+              {/* Additional Info */}
+              <div className="text-center mt-8 p-6 bg-gradient-to-r from-[#3A86FF]/10 to-[#9D4EDD]/10 rounded-xl border border-[#3A86FF]/20">
+                <p className="text-sm text-gray-300 mb-2">
+                  <strong className="text-[#3A86FF]">Completely FREE</strong> - No hidden charges, no fees
+                </p>
+                <p className="text-sm text-gray-300">
+                 You'll receive a confirmation email within 24-48 hours!
+                </p>
+              </div>
+            </div>
           </div>
         </div>
-
-        {/* Registration Form */}
-        <div className="bg-[#1F1F1F] rounded-2xl p-8 md:p-12 shadow-2xl border border-gray-800">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-8 text-white">
-            Register Now
-          </h2>
-          
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Name */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Full Name *
-              </label>
-              <input 
-                type="text" 
-                name="name"
-                value={formData.name}
-                onChange={handleInputChange}
-                placeholder="Enter your full name" 
-                className={`w-full p-4 rounded-xl bg-[#0D0D0D] border ${errors.name ? 'border-red-500' : 'border-gray-700'} focus:outline-none focus:border-[#3A86FF] focus:ring-2 focus:ring-[#3A86FF]/20 transition-all duration-300 text-white placeholder-gray-500`}
-              />
-              {errors.name && <p className="text-red-400 text-sm mt-1">{errors.name}</p>}
-            </div>
-
-            {/* Email */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Email Address *
-              </label>
-              <input 
-                type="email" 
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                placeholder="Enter your email address" 
-                className={`w-full p-4 rounded-xl bg-[#0D0D0D] border ${errors.email ? 'border-red-500' : 'border-gray-700'} focus:outline-none focus:border-[#3A86FF] focus:ring-2 focus:ring-[#3A86FF]/20 transition-all duration-300 text-white placeholder-gray-500`}
-              />
-              {errors.email && <p className="text-red-400 text-sm mt-1">{errors.email}</p>}
-            </div>
-
-            {/* Phone */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Phone Number *
-              </label>
-              <input 
-                type="tel" 
-                name="phone"
-                value={formData.phone}
-                onChange={handleInputChange}
-                placeholder="Enter your phone number" 
-                className={`w-full p-4 rounded-xl bg-[#0D0D0D] border ${errors.phone ? 'border-red-500' : 'border-gray-700'} focus:outline-none focus:border-[#3A86FF] focus:ring-2 focus:ring-[#3A86FF]/20 transition-all duration-300 text-white placeholder-gray-500`}
-              />
-              {errors.phone && <p className="text-red-400 text-sm mt-1">{errors.phone}</p>}
-            </div>
-
-            {/* University */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                University/College *
-              </label>
-              <input 
-                type="text" 
-                name="university"
-                value={formData.university}
-                onChange={handleInputChange}
-                placeholder="Enter your university/college name" 
-                className={`w-full p-4 rounded-xl bg-[#0D0D0D] border ${errors.university ? 'border-red-500' : 'border-gray-700'} focus:outline-none focus:border-[#3A86FF] focus:ring-2 focus:ring-[#3A86FF]/20 transition-all duration-300 text-white placeholder-gray-500`}
-              />
-              {errors.university && <p className="text-red-400 text-sm mt-1">{errors.university}</p>}
-            </div>
-
-            {/* University Location */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                University Location *
-              </label>
-              <input 
-                type="text" 
-                name="universityLocation"
-                value={formData.universityLocation}
-                onChange={handleInputChange}
-                placeholder="Enter your university location (City, State)" 
-                className={`w-full p-4 rounded-xl bg-[#0D0D0D] border ${errors.universityLocation ? 'border-red-500' : 'border-gray-700'} focus:outline-none focus:border-[#3A86FF] focus:ring-2 focus:ring-[#3A86FF]/20 transition-all duration-300 text-white placeholder-gray-500`}
-              />
-              {errors.universityLocation && <p className="text-red-400 text-sm mt-1">{errors.universityLocation}</p>}
-            </div>
-
-            {/* Graduation Year */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Graduation Year *
-              </label>
-              <select 
-                name="graduationYear"
-                value={formData.graduationYear}
-                onChange={handleInputChange}
-                className={`w-full p-4 rounded-xl bg-[#0D0D0D] border ${errors.graduationYear ? 'border-red-500' : 'border-gray-700'} focus:outline-none focus:border-[#3A86FF] focus:ring-2 focus:ring-[#3A86FF]/20 transition-all duration-300 text-white`}
-              >
-                <option value="">Select your expected graduation year</option>
-                {graduationYears.map(year => (
-                  <option key={year} value={year} className="bg-[#0D0D0D]">{year}</option>
-                ))}
-              </select>
-              {errors.graduationYear && <p className="text-red-400 text-sm mt-1">{errors.graduationYear}</p>}
-            </div>
-
-            {/* Preferred Domain */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Preferred Domain *
-              </label>
-              <select 
-                name="preferredDomain"
-                value={formData.preferredDomain}
-                onChange={handleInputChange}
-                className={`w-full p-4 rounded-xl bg-[#0D0D0D] border ${errors.preferredDomain ? 'border-red-500' : 'border-gray-700'} focus:outline-none focus:border-[#3A86FF] focus:ring-2 focus:ring-[#3A86FF]/20 transition-all duration-300 text-white`}
-              >
-                <option value="">Select your preferred domain</option>
-                {domains.map(domain => (
-                  <option key={domain} value={domain} className="bg-[#0D0D0D]">{domain}</option>
-                ))}
-              </select>
-              {errors.preferredDomain && <p className="text-red-400 text-sm mt-1">{errors.preferredDomain}</p>}
-            </div>
-
-            {/* CGPA */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                CGPA/Percentage *
-              </label>
-              <input 
-                type="number" 
-                name="cgpa"
-                value={formData.cgpa}
-                onChange={handleInputChange}
-                placeholder="Enter your CGPA (out of 10) or percentage" 
-                step="0.01"
-                min="0"
-                max="10"
-                className={`w-full p-4 rounded-xl bg-[#0D0D0D] border ${errors.cgpa ? 'border-red-500' : 'border-gray-700'} focus:outline-none focus:border-[#3A86FF] focus:ring-2 focus:ring-[#3A86FF]/20 transition-all duration-300 text-white placeholder-gray-500`}
-              />
-              {errors.cgpa && <p className="text-red-400 text-sm mt-1">{errors.cgpa}</p>}
-            </div>
-
-            {/* Participated in Hackathon */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Have you participated in any hackathon? *
-              </label>
-              <div className="flex gap-6">
-                <label className="flex items-center cursor-pointer">
-                  <input 
-                    type="radio" 
-                    name="participatedInHackathon"
-                    value="yes"
-                    checked={formData.participatedInHackathon === 'yes'}
-                    onChange={handleInputChange}
-                    className="mr-2 w-4 h-4 text-[#3A86FF] bg-[#0D0D0D] border-gray-600 focus:ring-[#3A86FF]"
-                  />
-                  <span className="text-white">Yes</span>
-                </label>
-                <label className="flex items-center cursor-pointer">
-                  <input 
-                    type="radio" 
-                    name="participatedInHackathon"
-                    value="no"
-                    checked={formData.participatedInHackathon === 'no'}
-                    onChange={handleInputChange}
-                    className="mr-2 w-4 h-4 text-[#3A86FF] bg-[#0D0D0D] border-gray-600 focus:ring-[#3A86FF]"
-                  />
-                  <span className="text-white">No</span>
-                </label>
-              </div>
-              {errors.participatedInHackathon && <p className="text-red-400 text-sm mt-1">{errors.participatedInHackathon}</p>}
-            </div>
-
-            {/* LinkedIn URL */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                LinkedIn Profile URL (Optional)
-              </label>
-              <input 
-                type="url" 
-                name="linkedinUrl"
-                value={formData.linkedinUrl}
-                onChange={handleInputChange}
-                placeholder="https://www.linkedin.com/in/yourprofile" 
-                className={`w-full p-4 rounded-xl bg-[#0D0D0D] border ${errors.linkedinUrl ? 'border-red-500' : 'border-gray-700'} focus:outline-none focus:border-[#3A86FF] focus:ring-2 focus:ring-[#3A86FF]/20 transition-all duration-300 text-white placeholder-gray-500`}
-              />
-              {errors.linkedinUrl && <p className="text-red-400 text-sm mt-1">{errors.linkedinUrl}</p>}
-            </div>
-
-            {/* Submit Button */}
-            <button 
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full px-8 py-5 bg-gradient-to-r from-[#3A86FF] to-[#9D4EDD] text-white font-semibold text-lg rounded-xl shadow-2xl hover:shadow-[#3A86FF]/25 hover:from-[#4A96FF] hover:to-[#AD5EEE] transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-            >
-              {isSubmitting ? (
-                <span className="flex items-center justify-center">
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Submitting...
-                </span>
-              ) : (
-                'Register for UMANG'
-              )}
-            </button>
-
-            {/* Additional Info */}
-            <div className="text-center mt-8 p-6 bg-gradient-to-r from-[#3A86FF]/10 to-[#9D4EDD]/10 rounded-xl border border-[#3A86FF]/20">
-              <p className="text-sm text-gray-300 mb-2">
-                <strong className="text-[#3A86FF]">Completely FREE</strong> - No hidden charges, no fees
-              </p>
-              <p className="text-sm text-gray-300">
-               You'll receive a confirmation email within 24-48 hours!
-              </p>
-            </div>
-            </form>
-        </div>
-      </div>
-    </section>
+      </section>
+    </>
   );
 };
 
